@@ -1,5 +1,5 @@
 {
-  "include": ["src/**/*", "__tests__/**/*", "include/**/*"],
+  "include": ["src/**/*", "__tests__/**/*", "include/**/*", "tests/**/*"],
   "compilerOptions": {
     "lib": [
       "es2022"
