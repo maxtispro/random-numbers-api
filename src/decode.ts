@@ -1,4 +1,4 @@
-import { hashFile512 } from "./hash";
+import { hashFile512 } from "./random";
 
 const nextRandom = () => hashFile512("./include/images/food.png");
 
