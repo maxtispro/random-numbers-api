@@ -9,11 +9,11 @@ This project uses node-js and is written in typescript (all you need is node-js 
 
 ### Installing and Running
 To install the project, simply run
-    npm i
+    `npm i`
 or
-    npm install
+    `npm install`
 To run the server locally, run
-    npm start
+    `npm start`
 This will start listening to URL queries on local port 80 (port 443 will be used officially for obvious security reasons but requires an SSL certificate which isn't necessary for testing).
 
 ### Extra Scripts
