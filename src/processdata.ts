@@ -1,9 +1,9 @@
-import assert from "assert";
-import fs, { createReadStream } from "fs";
+import fs from "fs";
+import fsp from "fs/promises";
 import { createHash } from "crypto";
 
 interface RandData {
-  rand: number[] | string[];
+  rand: number[];
   rand512: string;
   flags?: string;
 }
@@ -25,14 +25,15 @@ export class RandomTable {
   toString() {
     let str = "[\n";
     for (const rand of this.table) {
-      str += "  rand: [\n";
+      str += "  {\n    rand: [\n";
       for (const n of rand.rand) {
-        str += `    ${n}\n`;
+        str += `      ${n}\n`;
       }
+      str += "    ]\n  }\n";
       str += `  rand512: '${rand.rand512}'\n`;
-      str += rand.flags ? `  flags: '${rand.flags}'` : "";
+      str += rand.flags ? `  flags: '${rand.flags}\n'` : "";
     }
-    return str + "\n]";
+    return str + "\n]\n";
   }
 }
 
@@ -44,21 +45,13 @@ export function hash2Rand(hash: string): RandData {
   return { rand: nums, rand512: hash, flags: "*** Test Data - Only Use For Testing ***" };
 }
 
-export function hashFile512(filePath: fs.PathLike): Promise<string> {
-  assert(fs.existsSync(filePath), `[processdata.ts] file ${filePath.toString()} was not found`);
-  //assert(fs.accessSync(filePath, fs.constants.R_OK), `[hash.ts] permission denied to read ${filePath}`);
+export class FileHashError extends Error {}
+
+export async function hashFile512(filePath: fs.PathLike): Promise<string> {
+  if (!fs.existsSync(filePath)) throw new FileHashError(`File '${filePath.toString()}' not found`);
   const hash = createHash("sha512");
-  const input = createReadStream(filePath);
-  return new Promise(resolve =>
-    input.on("readable", () => {
-      // Only one element is going to be produced by the
-      // hash stream.
-      const data = input.read();
-      if (data) {
-        hash.update(data);
-      } else {
-        resolve(hash.digest("hex"));
-      }
-    })
-  );
+  return fsp
+    .readFile(filePath)
+    .then(buffer => hash.update(buffer))
+    .then(hash => hash.digest("hex"));
 }

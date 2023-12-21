@@ -11,35 +11,47 @@
  */
 
 import express from "express";
-import { RandomTable, hashFile512, hash2Rand } from "./processdata.js";
-import { FSListener, imgDir } from "./fsmanager.js";
+import fsp from "fs/promises"
+import { RandomTable, hashFile512, hash2Rand, FileHashError } from "./processdata.js";
+import { FSObservable, imgDir } from "./fsmanager.js";
+import { ManualOverrides } from "./commands.js";
+import { reportError } from "./logerror.js";
 
 // Constants
 const app = express();
 const port = 80;
-const fsListener = new FSListener(imgDir);
+const fsObs = new FSObservable(imgDir, 1000);
 const randomTable = new RandomTable();
 
 // Update Random Table
-fsListener.start(filePath => {
-  return hashFile512(filePath).then(hash2Rand)
+fsObs.subscribe(async filePath => {
+  return hashFile512(filePath)
+    .then(hash2Rand)
     .then(rand => randomTable.push(rand))
-    .then(() => fsListener.deleteFile(filePath))
-    .then(err => {
-      if (err !== undefined) console.error(err);
-      else console.log(randomTable.toString());
-      return err === undefined;
-    });
+    .then(() => fsp.rm(filePath))
+    .then(() => console.log(randomTable.toString()))
+    .catch(reportError);
 });
+fsObs.start();
 
 // Answer API Requests
 app.get("/", (req, res) => {
-  randomTable.pop().then(randObj => {
-    res.json(randObj);
-    console.log(`Random hash sent to ${req.ip}`);
-  });
+  randomTable
+    .pop()
+    .then(randObj => {
+      res.json(randObj);
+      console.log(`Random hash sent to ${req.ip}`);
+    })
+    .catch(reportError);
 });
 
 app.listen(port, () => {
   console.log(`Random Number API listening on port ${port}`);
 });
+
+// Server Side Override Inputs
+/* function stop() {
+  randomTable.stop();
+}
+
+(new ManualOverrides()).start(); */
