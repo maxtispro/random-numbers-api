@@ -1,15 +1,24 @@
 import fs from "fs";
 import fsp from "fs/promises";
 import { createHash } from "crypto";
+import { Queue } from "./util.js";
 
+/**
+ * Base unit for the random data
+ */
 interface RandData {
   rand: number[];
   rand512: string;
+  date: Date;
   flags?: string;
 }
 
+/**
+ * Storage container for each RandData object
+ * Is a queue (first in first out)
+ */
 export class RandomTable {
-  private table: RandData[] = [];
+  private table: Queue<RandData> = new Queue();
 
   push(rand: RandData) {
     this.table.push(rand);
@@ -17,23 +26,13 @@ export class RandomTable {
 
   pop(): Promise<RandData> {
     return new Promise<RandData>(res => {
-      while (this.table.length === 0);
-      res(this.table.pop() as RandData);
+      while (this.table.isEmpty());
+      res(this.table.pop());
     });
   }
 
   toString() {
-    let str = "[\n";
-    for (const rand of this.table) {
-      str += "  {\n    rand: [\n";
-      for (const n of rand.rand) {
-        str += `      ${n}\n`;
-      }
-      str += "    ]\n  }\n";
-      str += `  rand512: '${rand.rand512}'\n`;
-      str += rand.flags ? `  flags: '${rand.flags}\n'` : "";
-    }
-    return str + "\n]\n";
+    return JSON.stringify(this.table.toArray());
   }
 }
 
@@ -42,7 +41,7 @@ export function hash2Rand(hash: string): RandData {
   const nums: number[] = [];
   for (let i = 0; i < hash.length; i += hexDigitCount)
     nums.push(Number.parseInt(hash.slice(i, i + hexDigitCount), 16) / Math.pow(2, hexDigitCount * 4));
-  return { rand: nums, rand512: hash, flags: "*** Test Data - Only Use For Testing ***" };
+  return { rand: nums, rand512: hash, date: new Date(), flags: "*** Test Data - Only Use For Testing ***" };
 }
 
 export class FileHashError extends Error {}
