@@ -16,6 +16,15 @@ To run the server locally, run
     `npm start`
 This will start listening to URL queries on local port 80 (port 443 will be used officially for obvious security reasons but requires an SSL certificate which isn't necessary for testing).
 
+### Using Python Virtual Environment
+1. install virtualenv using `pip install virtualenv`
+2. create environment using `python -m venv python/env` or `virtualenv python/env` (latter is git-independent)
+3. activate using `./python/env/Scripts/activate` or look in the "Scripts" directory for os specific scripts
+4. install from "deps.txt" using `pip install -r python/deps.txt`
+5. install additional packages using `pip install`
+6. update "deps.txt" using `pip freeze > python/deps.txt`
+7. run `deactivate` to close the environment
+
 ### Extra Scripts
 For more available scripts that run tests and format code, check out the package.json file.
 
