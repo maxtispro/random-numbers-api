@@ -25,7 +25,7 @@ This will start listening to URL queries on local port 80 (port 443 will be used
 6. update "deps.txt" using `pip freeze > python/deps.txt`
 7. run `deactivate` to close the environment
 
-### Extra Scripts
+### Scripts
 For more available scripts that run tests and format code, check out the package.json file.
 
 ## Data Management

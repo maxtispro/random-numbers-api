@@ -29,7 +29,7 @@ fsObs.subscribe(async filePath => {
     .then(hash2Rand)
     .then(rand => randomTable.push(rand))
     .then(() => fsp.rm(filePath))
-    .then(() => console.log(randomTable.toString()))
+    //.then(() => console.log(randomTable.toString()))
     .catch(reportError);
 });
 fsObs.start();
