@@ -3,6 +3,8 @@ import fsp from "fs/promises";
 import { createHash } from "crypto";
 import { Queue } from "./util.js";
 
+export const RANDDATALIFETIME = 5000;
+
 /**
  * Base unit for the random data
  */
@@ -24,11 +26,27 @@ export class RandomTable {
     this.table.push(rand);
   }
 
-  pop(): Promise<RandData> {
+  private async awaitNext(): Promise<RandData> {
     return new Promise<RandData>(res => {
       while (this.table.isEmpty());
-      res(this.table.pop());
+      res(this.table.peak());
     });
+  }
+
+  randIsExpired(rand: RandData): boolean {
+    return new Date().getTime() - rand.date.getTime() > RANDDATALIFETIME;
+  }
+
+  async pop(): Promise<RandData> {
+    return this.awaitNext().then(() => this.table.pop());
+  }
+
+  async popValid(): Promise<RandData> {
+    return this.pop().then(rand => (this.randIsExpired(rand) ? this.popValid() : rand));
+  }
+
+  peak(): RandData | undefined {
+    return this.table.isEmpty() ? undefined : this.table.peak();
   }
 
   toString() {
@@ -44,10 +62,7 @@ export function hash2Rand(hash: string): RandData {
   return { rand: nums, rand512: hash, date: new Date(), flags: "*** Test Data - Only Use For Testing ***" };
 }
 
-export class FileHashError extends Error {}
-
 export async function hashFile512(filePath: fs.PathLike): Promise<string> {
-  if (!fs.existsSync(filePath)) throw new FileHashError(`File '${filePath.toString()}' not found`);
   const hash = createHash("sha512");
   return fsp
     .readFile(filePath)

@@ -15,9 +15,6 @@ def imgFeed(cam, delay):
     rval, frame = vc.read()
     cv.imwrite("include/img/img" + str(m) + ".png", frame)
     m = 1 if m >= 999 else m + 1
-    key = cv.waitKey(20)
-    if key == 27: # exit on ESC
-      break
 
 
 if __name__ == "__main__":

@@ -25,8 +25,11 @@ This will start listening to URL queries on local port 80 (port 443 will be used
 6. update "deps.txt" using `pip freeze > python/deps.txt`
 7. run `deactivate` to close the environment
 
-### Scripts
-For more available scripts that run tests and format code, check out the package.json file.
+### Running the Server
+1. activate the python environment
+2. run `npm start`
+3. run `python python/webcam.py [cam_number] [delay_milliseconds]`
+4. manually kill each process (start and stop scripts will be added shortly)
 
 ## Data Management
-All images, once hashed, will be deleted permanently off the system. After the random numbers are sent off over port 443 using a valid SSL certificate, they will also be permanently deleted off the system. Random numbers will only be stored when the system is offline and an obvious flag is attached to the data specifying that it is being used for testing purposes and should not be used for security purposes. The reason for storing such data will be to test for hash collisions. The code is free to look at and should be revised if any security issues are found.
+All images, once hashed, will be deleted permanently off the system. After the random numbers are sent off over port 443 using a valid SSL certificate, they will also be permanently deleted off the system. Random numbers will only be stored when the system is offline and an obvious flag is attached to the data specifying that it is being used for testing purposes and should not be used for security purposes. The reason for storing such data will be for testing and debugging. The code is free to look at and should be revised if any security issues are found.

@@ -45,4 +45,11 @@ describe("Queue", () => {
     v.forEach(v => q.push(v));
     expect(q.toArray()).toEqual(v);
   });
+
+  it("returns the correct length of the queue", () => {
+    const q = new Queue<number>();
+    expect(q.length()).toBe(0);
+    [1, 1, 1, 1].forEach(n => q.push(n));
+    expect(q.length()).toBe(4);
+  });
 });

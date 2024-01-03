@@ -11,9 +11,10 @@
  */
 
 import express from "express";
-import fsp from "fs/promises"
-import { RandomTable, hashFile512, hash2Rand, FileHashError } from "./processdata.js";
-import { FSObservable, imgDir } from "./fsmanager.js";
+import fs from "fs";
+import fsp from "fs/promises";
+import { RandomTable, hashFile512, hash2Rand } from "./processdata.js";
+import { FSObservable, delFile, imgDir } from "./fsmanager.js";
 import { ManualOverrides } from "./commands.js";
 import { reportError } from "./logerror.js";
 
@@ -25,19 +26,24 @@ const randomTable = new RandomTable();
 
 // Update Random Table
 fsObs.subscribe(async filePath => {
-  return hashFile512(filePath)
-    .then(hash2Rand)
-    .then(rand => randomTable.push(rand))
-    .then(() => fsp.rm(filePath))
-    //.then(() => console.log(randomTable.toString()))
-    .catch(reportError);
+  return (
+    hashFile512(filePath)
+      .then(hash2Rand)
+      .then(rand => randomTable.push(rand))
+      .then(() => console.log(`${filePath} successfully hashed`))
+      //.then(() => fsp.rm(filePath))
+      .then(() => delFile(filePath, 300))
+      .then(() => console.log(`${filePath} successfully deleted`))
+      //.then(() => console.log(randomTable.toString()))
+      .catch(reportError)
+  );
 });
 fsObs.start();
 
 // Answer API Requests
 app.get("/", (req, res) => {
   randomTable
-    .pop()
+    .popValid()
     .then(randObj => {
       res.json(randObj);
       console.log(`Random hash sent to ${req.ip}`);
