@@ -12,11 +12,11 @@ interface RandData {
   rand: number[];
   rand512: string;
   date: Date;
-  flags?: string;
+  flags?: string[];
 }
 
 /**
- * Storage container for each RandData object
+ * Storage container for each RandData object - 
  * Is a queue (first in first out)
  */
 export class RandomTable {
@@ -26,28 +26,32 @@ export class RandomTable {
     this.table.push(rand);
   }
 
-  private async awaitNext(): Promise<RandData> {
+  /* private async awaitNext(): Promise<RandData> {
     return new Promise<RandData>(res => {
       while (this.table.isEmpty());
       res(this.table.peak());
     });
-  }
+  } */
 
   randIsExpired(rand: RandData): boolean {
     return new Date().getTime() - rand.date.getTime() > RANDDATALIFETIME;
   }
 
   async pop(): Promise<RandData> {
-    return this.awaitNext().then(() => this.table.pop());
+    return new Promise<RandData>(resolve => {
+      while (this.table.isEmpty());
+      resolve(this.table.pop());
+    });
+    //return this.awaitNext().then(() => this.table.pop());
   }
 
   async popValid(): Promise<RandData> {
     return this.pop().then(rand => (this.randIsExpired(rand) ? this.popValid() : rand));
   }
 
-  peak(): RandData | undefined {
+  /* peak(): RandData | undefined {
     return this.table.isEmpty() ? undefined : this.table.peak();
-  }
+  } */
 
   toString() {
     return JSON.stringify(this.table.toArray());
@@ -55,11 +59,11 @@ export class RandomTable {
 }
 
 const hexDigitCount = 16;
-export function hash2Rand(hash: string): RandData {
+export function hash2Rand(hash: string, flags: string[]): RandData {
   const nums: number[] = [];
   for (let i = 0; i < hash.length; i += hexDigitCount)
     nums.push(Number.parseInt(hash.slice(i, i + hexDigitCount), 16) / Math.pow(2, hexDigitCount * 4));
-  return { rand: nums, rand512: hash, date: new Date(), flags: "*** Test Data - Only Use For Testing ***" };
+  return { rand: nums, rand512: hash, date: new Date(), flags: flags };
 }
 
 export async function hashFile512(filePath: fs.PathLike): Promise<string> {

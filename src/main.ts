@@ -8,11 +8,10 @@
  * Deletion Procedures:
  *  - images deleted as soon as they are processed
  *  - random numbers deleted from the table as soon as they are sent
+ *  - no random number older than 5 seconds is sent
  */
 
 import express from "express";
-import fs from "fs";
-import fsp from "fs/promises";
 import { RandomTable, hashFile512, hash2Rand } from "./processdata.js";
 import { FSObservable, delFile, imgDir } from "./fsmanager.js";
 import { ManualOverrides } from "./commands.js";
@@ -20,20 +19,20 @@ import { reportError } from "./logerror.js";
 
 // Constants
 const app = express();
-const port = 80;
+const port = 80; // for testing purposes
 const fsObs = new FSObservable(imgDir, 1000);
 const randomTable = new RandomTable();
 
 // Update Random Table
-fsObs.subscribe(async filePath => {
+fsObs.subscribe(async filepath => {
   return (
-    hashFile512(filePath)
-      .then(hash2Rand)
+    hashFile512(filepath)
+      .then(path => hash2Rand(path, ["*** Test Data - Only Use For Testing ***"]))
       .then(rand => randomTable.push(rand))
-      .then(() => console.log(`${filePath} successfully hashed`))
+      .then(() => console.log(`${filepath} hashed and processed`))
       //.then(() => fsp.rm(filePath))
-      .then(() => delFile(filePath, 300))
-      .then(() => console.log(`${filePath} successfully deleted`))
+      .then(() => delFile(filepath, 300))
+      .then(() => console.log(`${filepath} deleted`))
       //.then(() => console.log(randomTable.toString()))
       .catch(reportError)
   );
@@ -41,12 +40,12 @@ fsObs.subscribe(async filePath => {
 fsObs.start();
 
 // Answer API Requests
-app.get("/", (req, res) => {
+app.get("/", (request, response) => {
   randomTable
     .popValid()
     .then(randObj => {
-      res.json(randObj);
-      console.log(`Random hash sent to ${req.ip}`);
+      response.json(randObj);
+      console.log(`Random data sent to ${request.ip}`);
     })
     .catch(reportError);
 });

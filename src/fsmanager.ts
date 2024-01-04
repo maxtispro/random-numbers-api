@@ -7,11 +7,16 @@ export const imgDir = "./include/img/";
 
 export type Observer = (filePath: fs.PathLike) => Promise<void>;
 
+/**
+ * Observable structure for listening to the file system
+ * it listens to the specified directory for new files
+ * and updates each observer with the new filepaths, one path at a time with no repeats.
+ */
 export class FSObservable {
-  private dir: fs.PathLike;
-  private delayMS: number;
-  private observers: Observer[] = [];
-  private files: fs.PathLike[] = [];
+  private dir: fs.PathLike;           // directory to listen for updates in
+  private delayMS: number;            // delay till next update when dir is empty
+  private observers: Observer[] = []; // everything listening to this observable
+  private files: fs.PathLike[] = [];  // updating list of filepaths inside dir
 
   constructor(dir: fs.PathLike, delayMS: number) {
     this.dir = dir;
@@ -28,9 +33,7 @@ export class FSObservable {
 
   async start(): Promise<void> {
     return this.nextFile()
-      .then(async filepath => {
-        return this.update(filepath);
-      })
+      .then(async filepath => this.update(filepath))
       .catch(reportError)
       .then(() => this.start());
   }
@@ -39,7 +42,7 @@ export class FSObservable {
     return this.updateFiles().then(async () => {
       this.files = this.files.filter(file => this.fileIsValid(file));
       if (this.files.length > 0) return this.files[0];
-      return setTimeout(this.delayMS).then(() => this.nextFile());
+      return this.nextFile();
     });
   }
 
@@ -48,14 +51,18 @@ export class FSObservable {
     return fsp
       .readdir(this.dir)
       .then(files => {
-        if (files.length === 0) return setTimeout(this.delayMS).then(() => fsp.readdir(this.dir));
-        return files;
-      })
-      .then(files => {
+        if (files.length === 0)
+          return setTimeout(this.delayMS).then(() => this.updateFiles());
         this.files = files.map(file => this.dir.toString() + file.toString());
+        return;
       });
+      /* .then(files => {
+        this.files = files.map(file => this.dir.toString() + file.toString());
+      }); */
   }
 
+  // Opens and closes a file to check if it is ready for use
+  // i.e. if a file is unlinked it is ready for use
   private fileIsValid(filepath: fs.PathLike): boolean {
     try {
       fs.closeSync(fs.openSync(filepath, "r+"));
@@ -81,7 +88,7 @@ export async function delFile(filepath: fs.PathLike, waitTime: number): Promise<
     })
     .catch((err: NodeJS.ErrnoException) => {
       if (err.code === "ENOENT") console.log(`${filepath.toString()} already deleted`);
-      throw err;
+      else throw err;
     });
 }
 

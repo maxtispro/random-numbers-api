@@ -11,7 +11,7 @@ export async function reportError(err: any) {
     })
     .then(
       () => console.log(err, "Error Logged\n"),
-      err => console.log(err)
+      err => console.error(err)
     );
 }
 
